@@ -5,206 +5,217 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Absensi Pegawai</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f5f5f5; }
-    .container { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-    h2 { text-align: center; color: #333; margin-bottom: 20px; }
+    body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 5px; }
     .form-group { margin-bottom: 15px; }
-    label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
-    input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; box-sizing: border-box; }
-    .buttons { display: flex; gap: 10px; margin-top: 20px; }
-    button { flex: 1; padding: 15px; border: none; border-radius: 5px; font-size: 16px; font-weight: bold; cursor: pointer; color: white; }
-    .btn-berangkat { background: #28a745; }
-    .btn-pulang { background: #dc3545; }
-    button:disabled { background: #6c757d; cursor: not-allowed; }
-    .location-box { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; border-radius: 10px; margin: 20px 0; }
-    .location-item { background: rgba(255,255,255,0.2); padding: 8px; margin: 5px 0; border-radius: 5px; font-family: monospace; font-size: 13px; }
-    .status { display: inline-block; padding: 5px 10px; border-radius: 15px; font-size: 12px; margin-top: 10px; }
-    .status.waiting { background: #ffc107; color: #000; }
-    .status.success { background: #28a745; color: #fff; }
-    .status.error { background: #dc3545; color: #fff; }
-    .message { padding: 15px; margin-top: 15px; border-radius: 5px; text-align: center; display: none; }
-    .message.success { background: #d4edda; color: #155724; display: block; }
-    .message.error { background: #f8d7da; color: #721c24; display: block; }
-    .loading { text-align: center; color: #666; margin-top: 10px; display: none; }
+    .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+    .form-group input, .form-group select { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+    .absen-quick-buttons { display: flex; justify-content: space-between; gap: 10px; margin-top: 10px; }
+    .absen-quick-buttons button { flex: 1; padding: 12px 0; font-size: 1em; font-weight: bold; border: none; border-radius: 5px; color: #fff; cursor: pointer; }
+    .btn-berangkat { background-color: #28a745; }
+    .btn-pulang { background-color: #dc3545; }
+    .btn-berangkat:disabled, .btn-pulang:disabled { background-color: #6c757d; cursor: not-allowed; }
+    .koordinat-container { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; border-radius: 10px; margin-top: 15px; }
+    .koordinat-box { background: rgba(255,255,255,0.2); padding: 10px; border-radius: 5px; font-family: monospace; margin-bottom: 8px; }
+    .status-gps { display: inline-block; padding: 4px 8px; border-radius: 12px; font-size: 0.75em; font-weight: bold; }
+    .status-mencari { background: #ffc107; color: #000; }
+    .status-berhasil { background: #28a745; color: #fff; }
+    .status-gagal { background: #dc3545; color: #fff; }
+    .error-box { background: #f8d7da; color: #721c24; padding: 10px; border-radius: 5px; margin-top: 10px; display: none; }
+    .success-message { text-align: center; color: green; display: none; font-size: 1.5em; margin-top: 15px; }
+    progress { width: 100%; height: 18px; margin-top: 10px; display: none; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2>📋 Absensi Pegawai</h2>
-    
-    <form id="form">
-      <div class="form-group">
-        <label>Nama Pegawai</label>
-        <select name="nama" id="nama" required>
-          <option value="HERU PRASETYO WILARSO">HERU PRASETYO WILARSO</option>
-        </select>
+  <form id="absen-form">
+    <div class="form-group">
+      <label>Absensi Pegawai, an.:</label>
+      <select id="nama" name="nama" required>
+        <option value="HERU PRASETYO WILARSO">HERU PRASETYO WILARSO</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Tanggal:</label>
+      <input id="tanggal" name="tanggal" type="date" readonly />
+    </div>
+
+    <div class="form-group">
+      <label>Waktu:</label>
+      <input id="waktu" name="waktu" type="time" readonly />
+    </div>
+
+    <div class="form-group">
+      <label>Keterangan Absen:</label>
+      <div class="absen-quick-buttons">
+        <button type="button" class="btn-berangkat" id="btn-berangkat" onclick="submitAbsen('Berangkat')" disabled>Berangkat</button>
+        <button type="button" class="btn-pulang" id="btn-pulang" onclick="submitAbsen('Pulang')" disabled>Pulang</button>
       </div>
-      
-      <div class="form-group">
-        <label>Tanggal</label>
-        <input type="date" name="tanggal" id="tanggal" readonly />
-      </div>
-      
-      <div class="form-group">
-        <label>Waktu</label>
-        <input type="time" name="waktu" id="waktu" readonly />
-      </div>
-      
-      <input type="hidden" name="keterangan" id="keterangan" />
-      <input type="hidden" name="latitude" id="latitude" />
-      <input type="hidden" name="longitude" id="longitude" />
-      <input type="hidden" name="akurasi" id="akurasi" />
-      
-      <div class="location-box">
-        <strong>📍 Lokasi GPS</strong>
-        <div class="location-item" id="lat-display">Mencari...</div>
-        <div class="location-item" id="lng-display">Mencari...</div>
-        <div class="location-item" id="acc-display">-</div>
-        <span class="status waiting" id="status">Mencari lokasi...</span>
-      </div>
-      
-      <div class="buttons">
-        <button type="button" class="btn-berangkat" id="btn-masuk" onclick="submitForm('Berangkat')" disabled>
-          🌅 Berangkat
-        </button>
-        <button type="button" class="btn-pulang" id="btn-pulang" onclick="submitForm('Pulang')" disabled>
-          🌙 Pulang
-        </button>
-      </div>
-      
-      <div class="loading" id="loading">Menyimpan data...</div>
-      <div class="message" id="message"></div>
-    </form>
-  </div>
+    </div>
+
+    <input type="hidden" id="keterangan" name="keterangan" />
+    <input type="hidden" id="latitude" name="latitude" />
+    <input type="hidden" id="longitude" name="longitude" />
+    <input type="hidden" id="akurasi" name="akurasi" />
+    <button type="submit" id="submit-button" style="display: none;"></button>
+
+    <div class="koordinat-container">
+      <h3>📍 Lokasi Saat Ini</h3>
+      <div class="koordinat-box" id="display-latitude">Mencari...</div>
+      <div class="koordinat-box" id="display-longitude">Mencari...</div>
+      <div class="koordinat-box" id="display-akurasi">-</div>
+      <span class="status-gps status-mencari" id="status-gps">Mencari GPS...</span>
+      <button type="button" onclick="getLocation()" style="margin-top: 10px; width: 100%; padding: 8px;">🔄 Perbarui Lokasi</button>
+    </div>
+
+    <div class="error-box" id="error-box"></div>
+    <progress id="upload-progress" value="0" max="100"></progress>
+  </form>
+
+  <div class="success-message" id="success-msg">✅ Absen berhasil!</div>
 
   <script>
-    // ⬇️⬇️⬇️ GANTI DENGAN URL WEB APP BARU ANDA ⬇️⬇️⬇️
+    // GANTI DENGAN URL WEB APP BARU ANDA!
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzB6MECZ80Bn7lFii8Kd4yoWlN0xs5VBYnzOm4SbcF47lIBkE8lTWsoNAVGkroR8am0cA/exec";
     
-    // Set tanggal dan waktu
-    function setDateTime() {
+    document.addEventListener("DOMContentLoaded", function () {
+      updateDateTime();
+      getLocation();
+      
+      document.getElementById("absen-form").addEventListener("submit", handleSubmit);
+    });
+
+    function updateDateTime() {
       const now = new Date();
-      const y = now.getFullYear();
-      const m = String(now.getMonth() + 1).padStart(2, '0');
-      const d = String(now.getDate()).padStart(2, '0');
-      const h = String(now.getHours()).padStart(2, '0');
-      const min = String(now.getMinutes()).padStart(2, '0');
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
       
-      document.getElementById('tanggal').value = `${y}-${m}-${d}`;
-      document.getElementById('waktu').value = `${h}:${min}`;
+      document.getElementById("tanggal").value = `${year}-${month}-${day}`;
+      document.getElementById("waktu").value = `${hours}:${minutes}`;
+      
+      console.log("Date set to:", document.getElementById("tanggal").value);
+      console.log("Time set to:", document.getElementById("waktu").value);
     }
-    
-    // Get lokasi
-    function getLocation() {
-      const status = document.getElementById('status');
-      const btnMasuk = document.getElementById('btn-masuk');
-      const btnPulang = document.getElementById('btn-pulang');
+
+    function handleSubmit(e) {
+      e.preventDefault();
       
-      status.className = 'status waiting';
-      status.textContent = 'Mencari lokasi...';
-      btnMasuk.disabled = true;
+      const lat = document.getElementById("latitude").value;
+      if (!lat) {
+        showError("Lokasi belum terdeteksi!");
+        return;
+      }
+      
+      const form = document.getElementById("absen-form");
+      const formData = new FormData(form);
+      
+      // Debug: lihat isi FormData
+      console.log("FormData contents:");
+      for (let [key, value] of formData.entries()) {
+        console.log(key + ": " + value);
+      }
+      
+      document.getElementById("upload-progress").style.display = "block";
+      document.getElementById("upload-progress").value = 30;
+      document.getElementById("error-box").style.display = "none";
+      
+      fetch(SCRIPT_URL, {
+        method: "POST",
+        body: formData
+      })
+      .then(response => {
+        console.log("Response status:", response.status);
+        return response.text();
+      })
+      .then(text => {
+        console.log("Response text:", text);
+        document.getElementById("upload-progress").value = 100;
+        
+        if (text.includes("✅")) {
+          document.getElementById("success-msg").style.display = "block";
+          form.reset();
+          updateDateTime();
+          setTimeout(() => {
+            document.getElementById("success-msg").style.display = "none";
+            resetLocation();
+          }, 3000);
+        } else {
+          showError("Server: " + text);
+        }
+      })
+      .catch(err => {
+        console.error("Fetch error:", err);
+        showError("Gagal kirim: " + err.message);
+      })
+      .finally(() => {
+        setTimeout(() => {
+          document.getElementById("upload-progress").style.display = "none";
+        }, 1000);
+      });
+    }
+
+    function showError(msg) {
+      const errBox = document.getElementById("error-box");
+      errBox.textContent = msg;
+      errBox.style.display = "block";
+    }
+
+    function getLocation() {
+      const statusEl = document.getElementById("status-gps");
+      const btnBerangkat = document.getElementById("btn-berangkat");
+      const btnPulang = document.getElementById("btn-pulang");
+      
+      statusEl.className = "status-gps status-mencari";
+      statusEl.textContent = "Mencari GPS...";
+      btnBerangkat.disabled = true;
       btnPulang.disabled = true;
       
       if (!navigator.geolocation) {
-        status.className = 'status error';
-        status.textContent = 'GPS tidak didukung browser';
+        statusEl.className = "status-gps status-gagal";
+        statusEl.textContent = "GPS tidak didukung";
         return;
       }
       
       navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const lat = pos.coords.latitude;
-          const lng = pos.coords.longitude;
-          const acc = pos.coords.accuracy;
+        (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          const acc = position.coords.accuracy;
           
-          document.getElementById('latitude').value = lat;
-          document.getElementById('longitude').value = lng;
-          document.getElementById('akurasi').value = acc;
+          document.getElementById("latitude").value = lat;
+          document.getElementById("longitude").value = lng;
+          document.getElementById("akurasi").value = acc;
           
-          document.getElementById('lat-display').textContent = `Latitude: ${lat.toFixed(6)}`;
-          document.getElementById('lng-display').textContent = `Longitude: ${lng.toFixed(6)}`;
-          document.getElementById('acc-display').textContent = `Akurasi: ±${Math.round(acc)} meter`;
+          document.getElementById("display-latitude").textContent = "Lat: " + lat.toFixed(6);
+          document.getElementById("display-longitude").textContent = "Lng: " + lng.toFixed(6);
+          document.getElementById("display-akurasi").textContent = "Akurasi: ±" + Math.round(acc) + " m";
           
-          status.className = 'status success';
-          status.textContent = '✓ Lokasi ditemukan';
-          btnMasuk.disabled = false;
+          statusEl.className = "status-gps status-berhasil";
+          statusEl.textContent = "Lokasi OK ✓";
+          btnBerangkat.disabled = false;
           btnPulang.disabled = false;
         },
-        (err) => {
-          status.className = 'status error';
-          status.textContent = '✗ Gagal: ' + err.message;
+        (error) => {
+          statusEl.className = "status-gps status-gagal";
+          statusEl.textContent = "Gagal: " + error.message;
         },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        { enableHighAccuracy: true, timeout: 10000 }
       );
     }
-    
-    // Submit form
-    async function submitForm(ket) {
-      document.getElementById('keterangan').value = ket;
-      
-      const lat = document.getElementById('latitude').value;
-      if (!lat) {
-        showMessage('Lokasi belum ditemukan!', 'error');
-        return;
-      }
-      
-      const form = document.getElementById('form');
-      const formData = new FormData(form);
-      const loading = document.getElementById('loading');
-      const btnMasuk = document.getElementById('btn-masuk');
-      const btnPulang = document.getElementById('btn-pulang');
-      
-      // Debug: log isi formData
-      console.log('Mengirim data:');
-      for (let [k, v] of formData.entries()) {
-        console.log(k + ':', v);
-      }
-      
-      loading.style.display = 'block';
-      btnMasuk.disabled = true;
-      btnPulang.disabled = true;
-      
-      try {
-        const response = await fetch(SCRIPT_URL, {
-          method: 'POST',
-          body: formData
-        });
-        
-        const text = await response.text();
-        console.log('Response:', text);
-        
-        if (text.includes('SUCCESS')) {
-          showMessage('✅ Absensi berhasil disimpan!', 'success');
-          form.reset();
-          setDateTime();
-          getLocation();
-        } else {
-          showMessage('❌ ' + text, 'error');
-          btnMasuk.disabled = false;
-          btnPulang.disabled = false;
-        }
-      } catch (err) {
-        console.error('Error:', err);
-        showMessage('❌ Gagal mengirim: ' + err.message, 'error');
-        btnMasuk.disabled = false;
-        btnPulang.disabled = false;
-      } finally {
-        loading.style.display = 'none';
-      }
+
+    function resetLocation() {
+      document.getElementById("latitude").value = "";
+      document.getElementById("longitude").value = "";
+      document.getElementById("akurasi").value = "";
+      getLocation();
     }
-    
-    function showMessage(text, type) {
-      const msg = document.getElementById('message');
-      msg.textContent = text;
-      msg.className = 'message ' + type;
-      setTimeout(() => {
-        msg.style.display = 'none';
-      }, 3000);
+
+    function submitAbsen(ket) {
+      document.getElementById("keterangan").value = ket;
+      document.getElementById("submit-button").click();
     }
-    
-    // Init
-    setDateTime();
-    getLocation();
   </script>
 </body>
 </html>
