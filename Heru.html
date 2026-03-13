@@ -69,7 +69,6 @@
       cursor: not-allowed;
       opacity: 0.6;
     }
-    /* Styling untuk koordinat */
     .koordinat-container {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
@@ -190,14 +189,12 @@
       </div>
     </div>
 
-    <!-- Input hidden untuk data yang dikirim ke server -->
     <input type="hidden" id="keterangan" name="keterangan" />
     <input type="hidden" id="latitude" name="latitude" />
     <input type="hidden" id="longitude" name="longitude" />
     <input type="hidden" id="akurasi" name="akurasi" />
     <button type="submit" id="submit-button" style="display: none;"></button>
 
-    <!-- Tampilan Koordinat GPS -->
     <div class="koordinat-container">
       <h3>📍 Lokasi Saat Ini</h3>
       
@@ -226,6 +223,9 @@
   <audio id="success-sound" src="https://www.myinstants.com/media/sounds/notification-sound.mp3"></audio>
 
   <script>
+    // GANTI DENGAN URL WEB APP ANDA YANG BARU!
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzr0xq9VP_9K99GRaxOFi6ExY7tssoMLevaTtJzbrN8iBOyds_afzb7ogWIyN6-QRDlkg/exec";
+    
     document.addEventListener("DOMContentLoaded", function () {
       const tanggalInput = document.getElementById("tanggal");
       const waktuInput = document.getElementById("waktu");
@@ -236,19 +236,29 @@
 
       function updateDateTime() {
         const now = new Date();
-        tanggalInput.value = now.toISOString().split("T")[0];
-        waktuInput.value = now.toTimeString().slice(0, 5);
+        
+        // PERBAIKAN: Gunakan method lokal, bukan toISOString()
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        
+        // Format: yyyy-MM-dd untuk input date
+        tanggalInput.value = `${year}-${month}-${day}`;
+        // Format: HH:mm untuk input time
+        waktuInput.value = `${hours}:${minutes}`;
+        
+        console.log("Tanggal di-set:", tanggalInput.value); // Debug
+        console.log("Waktu di-set:", waktuInput.value); // Debug
       }
 
       updateDateTime();
-      
-      // Ambil lokasi saat halaman dimuat
       getLocation();
 
       form.addEventListener("submit", function (e) {
         e.preventDefault();
         
-        // Validasi apakah koordinat sudah didapat
         const lat = document.getElementById("latitude").value;
         const lng = document.getElementById("longitude").value;
         
@@ -257,29 +267,41 @@
           return;
         }
         
+        // Debug: cek nilai tanggal sebelum kirim
+        console.log("Kirim tanggal:", document.getElementById("tanggal").value);
+        console.log("Kirim waktu:", document.getElementById("waktu").value);
+        
         submitButton.disabled = true;
         uploadProgress.style.display = "block";
         uploadProgress.value = 30;
 
         const data = new FormData(form);
-        fetch("https://script.google.com/macros/s/AKfycbzUhgschH0JTjjQhkdRWot0bhJxXSI9wray033z_NVGOX4Xk3QgHVcuRjuSmAjtBJi_Yg/exec", {
+        
+        // Tambahkan timestamp client untuk referensi
+        data.append("client_timestamp", new Date().toISOString());
+
+        fetch(SCRIPT_URL, {
           method: "POST",
           body: data,
         })
         .then((response) => response.text())
         .then((responseText) => {
+          console.log("Response:", responseText);
           uploadProgress.value = 100;
-          document.getElementById("pegawai-nama").innerText = document.getElementById("nama").value;
-          successMsg.style.display = "block";
-          form.reset();
-          updateDateTime();
-          document.getElementById("success-sound").play();
           
-          // Reset tampilan koordinat
-          resetKoordinatDisplay();
+          if (responseText.includes("✅")) {
+            document.getElementById("pegawai-nama").innerText = document.getElementById("nama").value;
+            successMsg.style.display = "block";
+            form.reset();
+            updateDateTime();
+            document.getElementById("success-sound").play();
+            resetKoordinatDisplay();
+          } else {
+            alert("Gagal: " + responseText);
+          }
         })
         .catch((error) => {
-          alert("Gagal mengirim data.");
+          alert("Gagal mengirim data: " + error);
           console.error(error);
         })
         .finally(() => {
@@ -298,7 +320,6 @@
       const btnBerangkat = document.getElementById("btn-berangkat");
       const btnPulang = document.getElementById("btn-pulang");
       
-      // Update UI ke status mencari
       statusEl.className = "status-gps status-mencari";
       statusEl.textContent = "Mencari GPS...";
       btnRefresh.disabled = true;
@@ -314,7 +335,6 @@
         return;
       }
       
-      // Opsi untuk meningkatkan akurasi
       const options = {
         enableHighAccuracy: true,
         timeout: 10000,
@@ -327,17 +347,14 @@
           const lng = position.coords.longitude;
           const accuracy = position.coords.accuracy;
           
-          // Simpan ke input hidden
           document.getElementById("latitude").value = lat;
           document.getElementById("longitude").value = lng;
           document.getElementById("akurasi").value = accuracy;
           
-          // Tampilkan di UI
           document.getElementById("display-latitude").textContent = lat.toFixed(6);
           document.getElementById("display-longitude").textContent = lng.toFixed(6);
           document.getElementById("display-akurasi").textContent = "±" + Math.round(accuracy) + " meter";
           
-          // Update status
           statusEl.className = "status-gps status-berhasil";
           statusEl.textContent = "Lokasi berhasil dideteksi ✓";
           btnRefresh.disabled = false;
@@ -380,11 +397,10 @@
       document.getElementById("latitude").value = "";
       document.getElementById("longitude").value = "";
       document.getElementById("akurasi").value = "";
-      getLocation(); // Ambil ulang lokasi
+      getLocation();
     }
 
     function submitAbsen(keterangan) {
-      // Validasi lokasi sebelum submit
       const lat = document.getElementById("latitude").value;
       if (!lat) {
         alert("Lokasi belum terdeteksi. Mohon tunggu GPS siap.");
