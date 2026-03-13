@@ -22,10 +22,64 @@
     .status.waiting { background: #ffc107; color: #000; }
     .status.success { background: #28a745; color: #fff; }
     .status.error { background: #dc3545; color: #fff; }
-    .message { padding: 15px; margin-top: 15px; border-radius: 5px; text-align: center; display: none; }
-    .message.success { background: #d4edda; color: #155724; display: block; }
-    .message.error { background: #f8d7da; color: #721c24; display: block; }
+    
+    /* ⬇️ PESAN SUKSES BERKEDIP - PERMANEN ⬇️ */
+    .success-permanent {
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      font-size: 1.3em;
+      font-weight: bold;
+      margin-top: 20px;
+      display: none;
+      animation: blink 1.5s infinite, slideIn 0.5s ease-out;
+      box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+    }
+    
+    @keyframes blink {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.7; transform: scale(0.98); }
+    }
+    
+    @keyframes slideIn {
+      from { transform: translateY(-20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    
+    .success-icon {
+      font-size: 2em;
+      display: block;
+      margin-bottom: 10px;
+    }
+    
+    .success-time {
+      font-size: 0.7em;
+      font-weight: normal;
+      opacity: 0.9;
+      margin-top: 5px;
+    }
+    
     .loading { text-align: center; color: #666; margin-top: 10px; display: none; }
+    
+    /* Tombol reset untuk sembunyikan pesan (opsional) */
+    .btn-reset {
+      background: rgba(255,255,255,0.2);
+      border: 2px solid white;
+      color: white;
+      padding: 8px 20px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.7em;
+      margin-top: 10px;
+      transition: all 0.3s;
+    }
+    
+    .btn-reset:hover {
+      background: white;
+      color: #28a745;
+    }
   </style>
 </head>
 <body>
@@ -73,12 +127,19 @@
       </div>
       
       <div class="loading" id="loading">Menyimpan data...</div>
-      <div class="message" id="message"></div>
     </form>
+    
+    <!-- ⬇️ PESAN SUKSES YANG BERKEDIP DAN PERMANEN ⬇️ -->
+    <div class="success-permanent" id="success-msg">
+      <span class="success-icon">✅</span>
+      <div>ABSENSI BERHASIL!</div>
+      <div class="success-time" id="success-detail"></div>
+      <button class="btn-reset" onclick="hideSuccess()">Tutup Pesan</button>
+    </div>
   </div>
 
   <script>
-    // GANTI DENGAN URL WEB APP BARU ANDA
+    // GANTI DENGAN URL WEB APP ANDA
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyGJQ6K4ATsw7OwqhfQanBySxkdICjNdYnmauDOoZc0viDJBKKztUBwLXJgFvEOUGYPFQ/exec";
     
     function setDateTime() {
@@ -141,7 +202,7 @@
       
       const lat = document.getElementById('latitude').value;
       if (!lat) {
-        showMessage('Lokasi belum ditemukan!', 'error');
+        alert('Lokasi belum ditemukan!');
         return;
       }
       
@@ -165,17 +226,32 @@
         console.log('Response:', text);
         
         if (text.includes('SUCCESS')) {
-          showMessage('✅ Absensi berhasil disimpan!', 'success');
+          // ⬇️ TAMPILKAN PESAN SUKSES PERMANEN ⬇️
+          const now = new Date();
+          const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+          const dateStr = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+          
+          document.getElementById('success-detail').textContent = `${ket} | ${dateStr} | ${timeStr} WIB`;
+          document.getElementById('success-msg').style.display = 'block';
+          
+          // Reset form tapi pesan tetap muncul
           form.reset();
           setDateTime();
+          
+          // Ambil lokasi ulang untuk absensi berikutnya (tidak mengganggu pesan sukses)
           getLocation();
+          
+          // Tombol bisa dipakai lagi untuk absensi berikutnya
+          btnMasuk.disabled = false;
+          btnPulang.disabled = false;
+          
         } else {
-          showMessage('❌ ' + text, 'error');
+          alert('Gagal: ' + text);
           btnMasuk.disabled = false;
           btnPulang.disabled = false;
         }
       } catch (err) {
-        showMessage('❌ Gagal: ' + err.message, 'error');
+        alert('Gagal mengirim: ' + err.message);
         btnMasuk.disabled = false;
         btnPulang.disabled = false;
       } finally {
@@ -183,13 +259,12 @@
       }
     }
     
-    function showMessage(text, type) {
-      const msg = document.getElementById('message');
-      msg.textContent = text;
-      msg.className = 'message ' + type;
-      setTimeout(() => msg.style.display = 'none', 3000);
+    // Fungsi untuk sembunyikan pesan sukses (opsional)
+    function hideSuccess() {
+      document.getElementById('success-msg').style.display = 'none';
     }
     
+    // Init
     setDateTime();
     getLocation();
   </script>
